@@ -1,0 +1,53 @@
+version: '3.7'
+services:
+  app-backend:
+    build:
+      context: ./audit-log-backend
+      dockerfile: Dockerfile
+    image: audit-log-backend
+    container_name: audit-log-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - API_PREFIX=/api/v1
+      - DB_MONGO_URI=mongodb://mongodb:27017/?authSource=audit
+      - DB_MONGO_USERNAME=audit
+      - DB_MONGO_PASSWORD=audit 
+      - DB_MONGO_DBNAME=ama-audit
+      - AUTH_TOKEN_ISSUER=auth.ama.com
+      - AUTH_TOKEN_AUDIENCE=api.ama.com
+      - AUTH_TOKEN_PRIVATE_KEY=
+      - AUTH_TOKEN_PUBLIC_KEY=
+      - AUTH_TOKEN_SECRET_KEY=5c14221d-1475-433a-b740-5a7b5511dfef
+      - AUTH_TOKEN_AT_EXPIREIN=2h
+      - AUTH_TOKEN_RT_EXPIREIN=30d
+    ports:
+      - "3000:3000"
+    command: bash -c "npm run start:dev"
+    volumes:
+      - ./audit-log-backend/:/app/
+  app-frontend:
+    build:
+      context: ./audit-log-frontend
+      dockerfile: Dockerfile
+    image: audit-log-frontend
+    container_name: audit-log-frontend
+    restart: unless-stopped
+    ports:
+      - "4000:3000"
+    command: bash -c "npm run start"
+    volumes:
+      - ./audit-log-frontend/:/app/
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: admin
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo/data:/data/db
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
